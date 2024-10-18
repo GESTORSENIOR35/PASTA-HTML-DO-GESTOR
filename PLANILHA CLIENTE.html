@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestão de Clientes - Thinet Infinity</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(to right, #000000, #000000); /* Fundo preto */
+            color: #4caf50;
+            margin: 0;
+            padding: 20px;
+            transition: background 0.3s, color 0.3s;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        table, th, td {
+            border: 1px solid #fff;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+        .btn {
+            padding: 5px 10px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            margin: 5px;
+        }
+        .btn-green {
+            background-color: #4CAF50; /* Verde */
+            color: white;
+        }
+        .btn-yellow {
+            background-color: #ffc107;
+            color: black;
+        }
+        .btn-red {
+            background-color: #F44336;
+            color: white;
+        }
+        .btn-blue {
+            background-color: #2196F3;
+            color: white;
+        }
+        .hidden {
+            display: none;
+        }
+        .vencido {
+            background-color: #972732; /* Cor de fundo para clientes vencidos */
+        }
+        .alerta {
+            color: red; /* Texto em vermelho para alerta */
+        }
+        input[type="text"], input[type="date"], input[type="number"], select {
+            width: 100%;
+            padding: 5px;
+            margin: 5px 0;
+            border-radius: 5px;
+            border: 1px solid #f44336;
+            background: #660e7b;
+            color: #4caf50;
+        }
+        #totalReceber, #totalLogins {
+            font-weight: bold;
+        }
+        /* Temas */
+        .tema-claro {
+            background: #ffffff;
+            color: #000000;
+        }
+        .tema-claro table, .tema-claro th, .tema-claro td {
+            border: 1px solid #000;
+        }
+        .tema-claro input[type="text"], .tema-claro input[type="date"], .tema-claro input[type="number"], .tema-claro select {
+            background: rgba(0, 0, 0, 0.05);
+            color: #000;
+        }
+        .tema-claro .btn {
+            background-color: #f0f0f0;
+            color: #000;
+        }
+        .painel-alteracoes {
+            margin-top: 20px;
+            border: 1px solid #4caf50;
+            padding: 10px;
+            background-color: #2e2e2e;
+        }
+        .painel-alteracoes h2 {
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Gestão de Clientes - Thinet Infinity</h1>
+
+    <button id="btnTema" class="btn btn-blue" onclick="alternarTema()">🌙 Mudar para Tema Claro</button>
+    
+    <form id="clienteForm">
+        <label for="nome">👤 Nome do Cliente:</label>
+        <input type="text" id="nome" required>
+        <label for="whatsapp">📞 Número de WhatsApp:</label>
+        <input type="text" id="whatsapp" required>
+        <label for="tipoServico">Selecione o Serviço:</label>
+        <select id="tipoServico" required>
+            <option value="">Escolha...</option>
+            <option value="Internet Ilimitada">Internet Ilimitada</option>
+            <option value="IPTV">IPTV</option>
+            <option value="Revendedor de Internet Ilimitada">Revendedor de Internet Ilimitada</option>
+            <option value="Revendedor de IPTV">Revendedor de IPTV</option>
+        </select>
+        <div id="servidorIPTVDiv" class="hidden">
+            <label for="servidorIPTV">Selecione o Servidor IPTV:</label>
+            <select id="servidorIPTV">
+                <option value="Painel Top">Painel Top</option>
+                <option value="Painel Zeus">Painel Zeus</option>
+            </select>
+            <button type="button" onclick="editarServidor()">✏️ Editar Nome do Servidor</button>
+            <button type="button" onclick="excluirServidor()">🗑️ Excluir Servidor</button>
+            <button type="button" onclick="adicionarServidor()">➕ Adicionar Novo Servidor</button>
+        </div>
+        <div id="operadoraInternetDiv" class="hidden">
+            <label for="operadoraInternet">Selecione a Operadora:</label>
+            <select id="operadoraInternet">
+                <option value="">Escolha...</option>
+                <option value="Vivo">Vivo</option>
+                <option value="Tim">Tim</option>
+                <option value="Claro">Claro</option>
+            </select>
+        </div>
+        <label for="loginsAdquiridos">🔑 Logins Adquiridos:</label>
+        <input type="number" id="loginsAdquiridos" step="1" value="0" required>
+        <label for="dataPagamento">Data de Pagamento:</label>
+        <input type="date" id="dataPagamento" required>
+        <label for="valorFinal">💲 Valor Final:</label>
+        <input type="number" id="valorFinal" step="0.01" required>
+        <button type="button" onclick="adicionarCliente()" class="btn btn-green">➕ Adicionar Cliente</button>
+        <button type="button" onclick="confirmarSalvamento()" class="btn btn-yellow">💾 Salvar Edição</button>
+        <button type="button" onclick="limparCampos()" class="btn btn-blue">🧹 Limpar</button>
+    </form>
+
+    <!-- Campo de busca de cliente -->
+    <div style="margin-bottom: 20px;">
+        <input type="text" id="searchInput" placeholder="🔍 Buscar Cliente pelo Nome" onkeyup="buscarCliente()">
+    </div>
+
+    <h2>Lista de Clientes</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th>WhatsApp</th>
+                <th>Serviço</th>
+                <th>Servidor/Operadora</th>
+                <th>Data de Pagamento</th>
+                <th>Logins Adquiridos</th>
+                <th>Valor Final</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody id="tabelaClientes"></tbody>
+    </table>
+
+    <div id="totalReceber">💰 Total a Receber: R$ 0.00</div>
+    <div id="totalLogins">🔑 Total de Logins Adquiridos: 0</div>
+    <button onclick="mostrarVencidos()" class="btn btn-red">🔔 Mostrar Clientes Vencidos</button>
+    <button onclick="visualizarTodosClientes()" class="btn btn-blue">👥 Visualizar Todos os Clientes</button>
+    <button onclick="calcularTotalReceberELogins()" class="btn btn-green">💰 Calcular Totais</button>
+
+    <div class="painel-alteracoes">
+        <h2>Alterações Recentes</h2>
+        <ul id="listaAlteracoes"></ul>
+    </div>
+
+    <script>
+        let clientes = JSON.parse(localStorage.getItem('clientes')) || [];
+        let clienteEditandoIndex = null;
+        let temaEscuro = true;
+
+        document.getElementById('tipoServico').addEventListener('change', function () {
+            const tipoServico = this.value;
+            document.getElementById('servidorIPTVDiv').classList.toggle('hidden', tipoServico !== 'IPTV' && tipoServico !== 'Revendedor de IPTV');
+            document.getElementById('operadoraInternetDiv').classList.toggle('hidden', tipoServico !== 'Internet Ilimitada' && tipoServico !== 'Revendedor de Internet Ilimitada');
+        });
+
+        function adicionarCliente() {
+            const nome = document.getElementById('nome').value;
+            const whatsapp = document.getElementById('whatsapp').value;
+            const tipoServico = document.getElementById('tipoServico').value;
+            const servidorIPTV = document.getElementById('servidorIPTV').value;
+            const operadoraInternet = document.getElementById('operadoraInternet').value;
+            const loginsAdquiridos = parseInt(document.getElementById('loginsAdquiridos').value, 10) || 0;
+            const dataPagamento = document.getElementById('dataPagamento').value;
+            const valorFinal = document.getElementById('valorFinal').value;
+
+            const cliente = {
+                nome,
+                whatsapp,
+                tipoServico,
+                servidorIPTV: servidorIPTV || null,
+                operadoraInternet: operadoraInternet || null,
+                loginsAdquiridos,
+                dataPagamento,
+                valorFinal
+            };
+
+            if (clienteEditandoIndex !== null) {
+                // Atualiza cliente existente
+                clientes[clienteEditandoIndex] = cliente;
+                exibirAlteracoes(cliente, "editado");
+                clienteEditandoIndex = null; // Reseta índice de edição
+            } else {
+                // Adiciona novo cliente
+                clientes.push(cliente);
+                exibirAlteracoes(cliente, "adicionado");
+            }
+
+            localStorage.setItem('clientes', JSON.stringify(clientes));
+            atualizarTabela();
+            limparCampos();
+        }
+
+        function atualizarTabela() {
+            const tabela = document.getElementById('tabelaClientes');
+            tabela.innerHTML = '';
+            clientes.forEach((cliente, index) => {
+                const row = document.createElement('tr');
+                const dataVencida = new Date(cliente.dataPagamento) < new Date();
+                if (dataVencida) row.classList.add('vencido');
+                row.innerHTML = `
+                    <td contenteditable="true">${cliente.nome}</td>
+                    <td contenteditable="true">${cliente.whatsapp}</td>
+                    <td contenteditable="true">${cliente.tipoServico}</td>
+                    <td contenteditable="true">
+                        ${cliente.tipoServico === 'Internet Ilimitada' || cliente.tipoServico === 'Revendedor de Internet Ilimitada' 
+                            ? cliente.operadoraInternet 
+                            : cliente.servidorIPTV}
+                    </td>
+                    <td contenteditable="true">${cliente.dataPagamento}</td>
+                    <td contenteditable="true">${cliente.loginsAdquiridos}</td>
+                    <td contenteditable="true">${cliente.valorFinal}</td>
+                    <td>
+                        <button onclick="confirmarSalvamento(${index})" class="btn btn-yellow">💾 Salvar</button>
+                        <button onclick="enviarWhatsApp('${cliente.whatsapp}', '${cliente.nome}')" class="btn btn-green">📱 WhatsApp</button>
+                        <button onclick="editarCliente(${index})" class="btn btn-yellow">✏️ Editar</button>
+                        <button onclick="excluirCliente(${index})" class="btn btn-red">❌ Excluir</button>
+                    </td>
+                `;
+                tabela.appendChild(row);
+            });
+        }
+
+        function confirmarSalvamento(index) {
+            if (confirm("Deseja realmente salvar as alterações?")) {
+                salvarEdicao(index);
+            }
+        }
+
+        function editarCliente(index) {
+            clienteEditandoIndex = index;
+            const row = document.getElementById('tabelaClientes').rows[index];
+            document.getElementById('nome').value = row.cells[0].innerText;
+            document.getElementById('whatsapp').value = row.cells[1].innerText;
+            document.getElementById('tipoServico').value = row.cells[2].innerText;
+            document.getElementById('servidorIPTV').value = row.cells[3].innerText || '';
+            document.getElementById('operadoraInternet').value = row.cells[3].innerText || '';
+            document.getElementById('loginsAdquiridos').value = row.cells[5].innerText;
+            document.getElementById('dataPagamento').value = row.cells[4].innerText;
+            document.getElementById('valorFinal').value = row.cells[6].innerText;
+        }
+
+        function salvarEdicao(index) {
+            const row = document.getElementById('tabelaClientes').rows[index];
+            const cliente = {
+                nome: row.cells[0].innerText,
+                whatsapp: row.cells[1].innerText,
+                tipoServico: row.cells[2].innerText,
+                servidorIPTV: row.cells[3].innerText || null,
+                operadoraInternet: row.cells[3].innerText || null,
+                loginsAdquiridos: parseInt(row.cells[5].innerText, 10) || 0,
+                dataPagamento: row.cells[4].innerText,
+                valorFinal: row.cells[6].innerText
+            };
+
+            // Atualiza o cliente existente
+            clientes[index] = cliente;
+            localStorage.setItem('clientes', JSON.stringify(clientes));
+            atualizarTabela();
+            exibirAlteracoes(cliente, "editado");
+        }
+
+        function buscarCliente() {
+            const input = document.getElementById('searchInput');
+            const filter = input.value.toLowerCase();
+            const tabela = document.getElementById('tabelaClientes');
+            const rows = tabela.getElementsByTagName('tr');
+
+            for (let i = 0; i < rows.length; i++) {
+                const nome = rows[i].getElementsByTagName('td')[0];
+                if (nome) {
+                    const txtValue = nome.textContent || nome.innerText;
+                    rows[i].style.display = txtValue.toLowerCase().indexOf(filter) > -1 ? "" : "none";
+                }
+            }
+        }
+
+        function limparCampos() {
+            document.getElementById('nome').value = '';
+            document.getElementById('whatsapp').value = '';
+            document.getElementById('tipoServico').value = '';
+            document.getElementById('servidorIPTV').value = '';
+            document.getElementById('operadoraInternet').value = '';
+            document.getElementById('loginsAdquiridos').value = 0;
+            document.getElementById('dataPagamento').value = '';
+            document.getElementById('valorFinal').value = '';
+        }
+
+        function excluirCliente(index) {
+            clientes.splice(index, 1);
+            localStorage.setItem('clientes', JSON.stringify(clientes));
+            atualizarTabela();
+        }
+
+        function enviarWhatsApp(whatsapp, nome) {
+            const whatsappNumber = whatsapp.replace(/\D/g, ''); // Remove qualquer caractere não numérico
+            const mensagem = `Olá ${nome}, estou entrando em contato sobre o serviço de interesse!`;
+            window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(mensagem)}`, '_blank');
+        }
+
+        function calcularTotalReceberELogins() {
+            const totalReceber = clientes.reduce((total, cliente) => total + parseFloat(cliente.valorFinal || 0), 0);
+            const totalLogins = clientes.reduce((total, cliente) => total + (cliente.loginsAdquiridos || 0), 0);
+            document.getElementById('totalReceber').innerText = `💰 Total a Receber: R$ ${totalReceber.toFixed(2)}`;
+            document.getElementById('totalLogins').innerText = `🔑 Total de Logins Adquiridos: ${totalLogins}`;
+        }
+
+        function mostrarVencidos() {
+            const tabela = document.getElementById('tabelaClientes');
+            for (let i = 0; i < tabela.rows.length; i++) {
+                const dataVencida = new Date(clientes[i].dataPagamento) < new Date();
+                tabela.rows[i].style.display = dataVencida ? "" : "none";
+            }
+        }
+
+        function visualizarTodosClientes() {
+            const tabela = document.getElementById('tabelaClientes');
+            for (let i = 0; i < tabela.rows.length; i++) {
+                tabela.rows[i].style.display = "";
+            }
+        }
+
+        function alternarTema() {
+            temaEscuro = !temaEscuro;
+            document.body.classList.toggle('tema-claro', !temaEscuro);
+            document.getElementById('btnTema').innerText = temaEscuro ? "🌙 Mudar para Tema Claro" : "🌙 Mudar para Tema Escuro";
+        }
+
+        // Função para exibir alterações feitas no painel
+        function exibirAlteracoes(cliente, acao) {
+            const listaAlteracoes = document.getElementById('listaAlteracoes');
+            const item = document.createElement('li');
+            item.textContent = `Cliente ${acao}: ${cliente.nome}, WhatsApp: ${cliente.whatsapp}, Serviço: ${cliente.tipoServico}, Logins: ${cliente.loginsAdquiridos}, Valor: R$ ${cliente.valorFinal}`;
+            listaAlteracoes.appendChild(item);
+        }
+
+        // Função para editar o nome do servidor selecionado
+        function editarServidor() {
+            const servidorIPTV = document.getElementById('servidorIPTV');
+            const servidorSelecionado = servidorIPTV.options[servidorIPTV.selectedIndex];
+            const novoNomeServidor = prompt("Digite o novo nome do servidor IPTV:", servidorSelecionado.text);
+            if (novoNomeServidor) {
+                servidorSelecionado.text = novoNomeServidor;
+                servidorSelecionado.value = novoNomeServidor;
+            }
+        }
+
+        // Função para excluir o servidor selecionado
+        function excluirServidor() {
+            const servidorIPTV = document.getElementById('servidorIPTV');
+            const servidorSelecionado = servidorIPTV.selectedIndex;
+            if (servidorSelecionado >= 0) {
+                if (confirm("Tem certeza que deseja excluir este servidor?")) {
+                    servidorIPTV.remove(servidorSelecionado);
+                }
+            }
+        }
+
+        // Função para adicionar um novo servidor
+        function adicionarServidor() {
+            const servidorIPTV = document.getElementById('servidorIPTV');
+            const novoServidor = prompt("Digite o nome do novo servidor IPTV:");
+            if (novoServidor) {
+                const option = document.createElement('option');
+                option.value = novoServidor;
+                option.text = novoServidor;
+                servidorIPTV.appendChild(option);
+                servidorIPTV.value = novoServidor; // Seleciona o novo servidor adicionado
+            }
+        }
+
+        atualizarTabela(); // Inicializa a tabela
+    </script>
+</body>
+</html>
